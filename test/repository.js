@@ -73,6 +73,22 @@ const EVENT_HANDLERS = {
   }
 };
 
+const COMMAND_HANDLERS = {
+  createAccount: function (state, command) {
+    return [
+      {
+        type: 'accountCreated',
+        username: command.username,
+        email: command.email
+      },
+      {
+        type: 'profileEdited',
+        name: command.name
+      }
+    ];
+  }
+};
+
 describe('EasySource.Repository', function () {
   beforeEach(function () {
     this.eventStore = new EasySource.EventStores.InMemory();
@@ -84,7 +100,8 @@ describe('EasySource.Repository', function () {
       eventStore: this.eventStore,
       snapshotStore: this.snapshotStore,
       defaultState: this.defaultState,
-      events: EVENT_HANDLERS
+      events: EVENT_HANDLERS,
+      commands: COMMAND_HANDLERS
     });
   });
 
@@ -92,7 +109,8 @@ describe('EasySource.Repository', function () {
     it('should fetch unknown aggregates', function () {
       return this.repo.fetch('john')
         .then(function (john) {
-          assert.deepEqual(john.emails, []);
+          var state = john.getState();
+          assert.deepEqual(state.emails, []);
         });
     });
 
@@ -104,9 +122,11 @@ describe('EasySource.Repository', function () {
           return repo.fetch('john');
         })
         .then(function (john) {
-          assert.deepEqual(john.username, 'john');
-          assert.deepEqual(john.name, 'John Doe');
-          assert.deepEqual(john.emails, [ 'john@doe.com' ]);
+          var state = john.getState();
+
+          assert.deepEqual(state.username, 'john');
+          assert.deepEqual(state.name, 'John Doe');
+          assert.deepEqual(state.emails, [ 'john@doe.com' ]);
         });
     });
 
@@ -146,10 +166,12 @@ describe('EasySource.Repository', function () {
           return repo.fetch('john');
         })
         .then(function (john) {
-          assert.deepEqual(john.username, 'john');
-          assert.deepEqual(john.name, 'John Doe');
-          assert.deepEqual(john.emails, [ 'john@doe.com' ]);
-          assert.deepEqual(john.isDeleted, true);
+          var state = john.getState();
+
+          assert.deepEqual(state.username, 'john');
+          assert.deepEqual(state.name, 'John Doe');
+          assert.deepEqual(state.emails, [ 'john@doe.com' ]);
+          assert.deepEqual(state.isDeleted, true);
         });
     });
 
@@ -165,9 +187,11 @@ describe('EasySource.Repository', function () {
           return repo.fetch('john');
         })
         .then(function (john) {
-          assert.deepEqual(john.username, 'john');
-          assert.deepEqual(john.name, 'John Doe');
-          assert.deepEqual(john.emails, [ 'john@doe.com' ]);
+          var state = john.getState();
+
+          assert.deepEqual(state.username, 'john');
+          assert.deepEqual(state.name, 'John Doe');
+          assert.deepEqual(state.emails, [ 'john@doe.com' ]);
         });
     });
   });
@@ -179,6 +203,53 @@ describe('EasySource.Repository', function () {
       return repo.fetch('john')
         .then(function (john) {
           return repo.save(john);
+        });
+    });
+
+    it('should append the events to the store', function () {
+      var repo = this.repo;
+
+      return repo.fetch('john')
+        .then(function (john) {
+          john.createAccount({
+            username: 'john',
+            email: 'john@doe.com',
+            name: 'John Doe'
+          });
+
+          return repo.save(john);
+        })
+        .then(function () {
+          return repo.fetch('john');
+        })
+        .then(function (john) {
+          var state = john.getState();
+
+          assert.deepEqual(state.username, 'john');
+          assert.deepEqual(state.name, 'John Doe');
+          assert.deepEqual(state.emails, [ 'john@doe.com' ]);
+        });
+    });
+
+    it('should handle version conflicts', function () {
+      var repo = this.repo;
+
+      return repo.fetch('john')
+        .then(function (john) {
+          john.createAccount({
+            username: 'john',
+            email: 'john@doe.com',
+            name: 'John Doe'
+          });
+
+          return repo.save(john)
+            .then(function () {
+              return repo.save(john);
+            });
+        })
+        .catch(function (err) {
+          assert(err instanceof
+            EasySource.EventStores.InMemory.VersionConflictError);
         });
     });
   });

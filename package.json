@@ -1,6 +1,6 @@
 {
   "name": "easy-source",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "From zero to event sourcing",
   "author": "Chris Baker <mail.chris.baker@gmail.com>",
   "license": "MIT",
