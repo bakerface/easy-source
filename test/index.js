@@ -20,5 +20,3 @@
  * SOFTWARE.
  *
  */
-
-module.exports = require('./lib');

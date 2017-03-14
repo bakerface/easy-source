@@ -21,4 +21,59 @@
  *
  */
 
-module.exports = require('./lib');
+'use strict';
+
+var Promise = require('bluebird');
+
+function hasRevision(revision) {
+  return function (record) {
+    return record.revision === revision;
+  };
+}
+
+function serialize(revision, version, state) {
+  return {
+    revision: revision,
+    version: JSON.stringify(version),
+    state: JSON.stringify(state)
+  };
+}
+
+function deserialize(record) {
+  return {
+    revision: record.revision,
+    version: JSON.parse(record.version),
+    state: JSON.parse(record.state)
+  };
+}
+
+function negate(f) {
+  return function (x) {
+    return !f(x);
+  };
+}
+
+function ProjectionStore() {
+  this._records = [];
+}
+
+ProjectionStore.prototype = {
+  fetch: function (revision) {
+    var snapshot = this._records
+      .filter(hasRevision(revision))
+      .map(deserialize)
+      .shift();
+
+    return Promise.resolve(snapshot);
+  },
+
+  store: function (revision, version, state) {
+    this._records = this._records
+      .filter(negate(hasRevision(revision)))
+      .concat(serialize(revision, version, state));
+
+    return Promise.resolve();
+  }
+};
+
+module.exports = ProjectionStore;

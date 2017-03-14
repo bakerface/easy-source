@@ -21,4 +21,6 @@
  *
  */
 
-module.exports = require('./lib');
+exports.user = require('./user');
+exports.idea = require('./idea');
+exports.project = require('./project');

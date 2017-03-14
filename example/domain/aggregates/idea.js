@@ -21,35 +21,24 @@
  *
  */
 
-'use strict';
+exports.revision = 0;
 
-function createShorthand(commands, name) {
-  this[name] = function (options) {
-    var process = commands[name];
-    var events = process(this._state, options);
+exports.defaultState = { };
 
-    this._events = this._events.concat(events);
-  };
-}
-
-var Aggregate = module.exports = function (commands, snapshot) {
-  this._aggregateId = snapshot.aggregateId;
-  this._version = snapshot.version;
-  this._state = snapshot.state;
-  this._events = [];
-
-  Object.keys(commands)
-    .forEach(createShorthand.bind(this, commands));
+exports.events = {
+  ideaCreated: function (state, event) {
+    return {
+      createdAt: event.at
+    };
+  }
 };
 
-Aggregate.prototype.getState = function () {
-  return this._state;
-};
+exports.commands = {
+  createIdea: function (state, command, accept, reject) {
+    if (typeof state.createdAt !== 'undefined') {
+      return reject('ideaCreated');
+    }
 
-Aggregate.prototype.toCommit = function () {
-  return {
-    aggregateId: this._aggregateId,
-    version: this._version,
-    events: this._events
-  };
+    return accept('ideaCreated');
+  }
 };

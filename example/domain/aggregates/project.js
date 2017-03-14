@@ -21,4 +21,24 @@
  *
  */
 
-module.exports = require('./lib');
+exports.revision = 0;
+
+exports.defaultState = { };
+
+exports.events = {
+  projectCreated: function (state, event) {
+    return {
+      createdAt: event.at
+    };
+  }
+};
+
+exports.commands = {
+  createProject: function (state, command, accept, reject) {
+    if (typeof state.createdAt !== 'undefined') {
+      return reject('projectCreated');
+    }
+
+    return accept('projectCreated');
+  }
+};
