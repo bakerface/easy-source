@@ -21,4 +21,4 @@
  *
  */
 
-module.exports = require('./lib');
+exports.users = require('./users');

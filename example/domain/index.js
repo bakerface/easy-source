@@ -21,4 +21,8 @@
  *
  */
 
-module.exports = require('./lib');
+var EasySource = require('../..');
+var aggregates = require('./aggregates');
+var projections = require('./projections');
+
+module.exports = EasySource.Domain.toClass(aggregates, projections);

@@ -1,6 +1,6 @@
 {
   "name": "easy-source",
-  "version": "1.1.0",
+  "version": "2.0.2",
   "description": "From zero to event sourcing",
   "author": "Chris Baker <mail.chris.baker@gmail.com>",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "url": "https://github.com/bakerface/easy-source.git"
   },
   "scripts": {
-    "test": "xo && nyc --check-coverage _mocha",
+    "test": "xo && nyc --check-coverage _mocha --recursive",
     "codeclimate": "codeclimate-test-reporter < coverage/lcov.info"
   },
   "nyc": {
@@ -38,8 +38,15 @@
         "error",
         "stroustrup"
       ],
-      "max-nested-callbacks": [
+      "max-params": [
         "off"
+      ],
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_"
+        }
       ],
       "object-curly-spacing": [
         "error",
@@ -48,10 +55,12 @@
     }
   },
   "devDependencies": {
-    "codeclimate-test-reporter": "^0.4.0",
-    "dynalite": "^1.1.0",
+    "codeclimate-test-reporter": "^0.4.1",
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
     "xo": "^0.17.1"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.0"
   }
 }

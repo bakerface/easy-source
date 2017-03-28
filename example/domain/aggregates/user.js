@@ -21,18 +21,24 @@
  *
  */
 
-'use strict';
+exports.revision = 0;
 
-var Store = module.exports = function () {
-  this._snapshots = { };
+exports.defaultState = { };
+
+exports.events = {
+  userRegistered: function (state, event) {
+    return {
+      registeredAt: event.at
+    };
+  }
 };
 
-Store.prototype.fetch = function (aggregateId) {
-  var snapshot = this._snapshots[aggregateId];
-  return Promise.resolve(snapshot);
-};
+exports.commands = {
+  registerUser: function (state, command, accept, reject) {
+    if (typeof state.registeredAt !== 'undefined') {
+      return reject('userRegistered');
+    }
 
-Store.prototype.store = function (options) {
-  this._snapshots[options.aggregateId] = options;
-  return Promise.resolve();
+    return accept('userRegistered');
+  }
 };
