@@ -72,7 +72,7 @@ EventStore.prototype = {
       .slice(version)
       .map(deserialize);
 
-    return new EventStream(events);
+    return Promise.resolve(new EventStream(events));
   },
 
   scan: function (version) {
@@ -80,7 +80,7 @@ EventStore.prototype = {
       .slice(version)
       .map(deserialize);
 
-    return new EventStream(events);
+    return Promise.resolve(new EventStream(events));
   },
 
   append: function (aggregateId, version, events) {
