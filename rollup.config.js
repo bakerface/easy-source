@@ -14,6 +14,10 @@ function createConfiguration(format, extension) {
       entryFileNames: `[name].${extension}`,
       chunkFileNames: `[name]-[hash].${extension}`,
     },
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        exclude: ["./dist/**", "./test/**"],
+      }),
+    ],
   };
 }
