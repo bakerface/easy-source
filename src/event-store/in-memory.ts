@@ -28,42 +28,37 @@ export class InMemoryEventStore<Event> implements EventStore<Event> {
   async query(
     options: EventStoreQueryOptions,
   ): Promise<EventStoreIterator<Event>> {
-    return this._batch(
+    return batch(
       options,
-      this._options.maxEventsPerQuery || Number.MAX_SAFE_INTEGER,
       this._getRecordsForSubject(options.subject),
+      this._options.maxEventsPerQuery,
     );
   }
 
   async scan(
     options?: EventStoreScanOptions,
   ): Promise<EventStoreIterator<Event>> {
-    return this._batch(
-      options || {},
-      this._options.maxEventsPerScan || Number.MAX_SAFE_INTEGER,
-      this._records,
-    );
+    return batch(options, this._records, this._options.maxEventsPerScan);
   }
 
   async save(
     options: EventStoreSaveOptions<Event>,
   ): Promise<EventStoreIterator<Event>> {
+    const cookie = parseCookie(options.cookie);
     const records = this._getRecordsForSubject(options.subject);
-    const cookie = this._parseCookieOrDefault(options.cookie, 0);
 
-    if (records.length !== cookie) {
+    if (cookie !== records.length) {
       throw new EventStoreConcurrencyError(options.subject, options.cookie);
     }
 
     for (const event of options.events) {
-      this._records.push({ subject: options.subject, event });
+      this._records.push({
+        subject: options.subject,
+        event,
+      });
     }
 
-    return this._batch(
-      options,
-      Number.MAX_SAFE_INTEGER,
-      this._getRecordsForSubject(options.subject),
-    );
+    return batch(options, this._getRecordsForSubject(options.subject));
   }
 
   private _getRecordsForSubject(subject: string): EventStoreRecord<Event>[] {
@@ -73,38 +68,35 @@ export class InMemoryEventStore<Event> implements EventStore<Event> {
 
     return this._records.filter((record) => record.subject === subject);
   }
+}
 
-  private _batch(
-    options: EventStoreIterateOptions,
-    limit: number,
-    filtered: readonly EventStoreRecord<Event>[],
-  ): EventStoreIterator<Event> {
-    const start = this._parseCookieOrDefault(options.cookie, 0);
-    const end = start + limit;
-    const records = filtered.slice(start, end);
-    const cookie = this._createCookie(start + records.length);
+function batch<Event>(
+  options: EventStoreIterateOptions = {},
+  filtered: readonly EventStoreRecord<Event>[],
+  limit = Number.MAX_SAFE_INTEGER,
+): EventStoreIterator<Event> {
+  const start = parseCookie(options.cookie);
+  const end = start + limit;
+  const records = filtered.slice(start, end);
+  const cookie = createCookie(start + records.length);
 
-    return { cookie, records };
+  return { cookie, records };
+}
+
+function parseCookie(cookie?: string): number {
+  if (!cookie) {
+    return 0;
   }
 
-  private _parseCookieOrDefault<T>(
-    cookie: string | undefined,
-    otherwise: T,
-  ): T | number {
-    if (!cookie) {
-      return otherwise;
-    }
+  const n = +cookie;
 
-    const n = +cookie;
-
-    if (isNaN(n) || !Number.isInteger(n) || n < 0) {
-      throw new EventStoreCookieFormatError(cookie);
-    }
-
-    return n;
+  if (isNaN(n) || !Number.isInteger(n) || n < 0) {
+    throw new EventStoreCookieFormatError(cookie);
   }
 
-  private _createCookie(n: number) {
-    return "" + n;
-  }
+  return n;
+}
+
+function createCookie(n: number) {
+  return "" + n;
 }

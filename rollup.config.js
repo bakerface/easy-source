@@ -16,7 +16,7 @@ function createConfiguration(format, extension) {
     },
     plugins: [
       typescript({
-        exclude: ["./dist/**", "./test/**"],
+        include: ["./src/**"],
       }),
     ],
   };
